@@ -16,7 +16,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class OverlayService extends Service {
-
     private WindowManager wm;
     private View panel;
     private float lastX, lastY;
@@ -35,30 +34,30 @@ public class OverlayService extends Service {
         layout.setPadding(8, 8, 8, 8);
         panel = layout;
 
-        addBtn(layout, "↔ قلب أفقي", v -> {
+        addBtn(layout, "qalb ofqi", v -> {
             TransformSettings.get().flipHorizontal = !TransformSettings.get().flipHorizontal;
-            toast("قلب أفقي: " + (TransformSettings.get().flipHorizontal ? "تشغيل" : "إيقاف"));
+            toast("flip H: " + TransformSettings.get().flipHorizontal);
         });
-        addBtn(layout, "↕ قلب عمودي", v -> {
+        addBtn(layout, "qalb 3amudi", v -> {
             TransformSettings.get().flipVertical = !TransformSettings.get().flipVertical;
-            toast("قلب عمودي: " + (TransformSettings.get().flipVertical ? "تشغيل" : "إيقاف"));
+            toast("flip V: " + TransformSettings.get().flipVertical);
         });
-        addBtn(layout, "↻ تدوير +90°", v -> {
+        addBtn(layout, "tadwir +90", v -> {
             TransformSettings.get().rotateRight();
-            toast("تدوير: " + TransformSettings.get().rotation + "°");
+            toast("rot: " + TransformSettings.get().rotation);
         });
-        addBtn(layout, "↺ تدوير -90°", v -> {
+        addBtn(layout, "tadwir -90", v -> {
             TransformSettings.get().rotateLeft();
-            toast("تدوير: " + TransformSettings.get().rotation + "°");
+            toast("rot: " + TransformSettings.get().rotation);
         });
-        addBtn(layout, "← تحريك يسار", v -> { TransformSettings.get().panX -= 50; toast("X: " + TransformSettings.get().panX); });
-        addBtn(layout, "→ تحريك يمين", v -> { TransformSettings.get().panX += 50; toast("X: " + TransformSettings.get().panX); });
-        addBtn(layout, "↑ تحريك أعلى",  v -> { TransformSettings.get().panY -= 50; toast("Y: " + TransformSettings.get().panY); });
-        addBtn(layout, "↓ تحريك أسفل",  v -> { TransformSettings.get().panY += 50; toast("Y: " + TransformSettings.get().panY); });
-        addBtn(layout, "+ تكبير",  v -> { TransformSettings.get().scale = Math.min(3f, TransformSettings.get().scale + 0.1f); toast("zoom: " + String.format("%.1f", TransformSettings.get().scale)); });
-        addBtn(layout, "- تصغير",  v -> { TransformSettings.get().scale = Math.max(0.5f, TransformSettings.get().scale - 0.1f); toast("zoom: " + String.format("%.1f", TransformSettings.get().scale)); });
-        addBtn(layout, "↺ إعادة ضبط", v -> { TransformSettings.get().resetAll(); toast("تم إعادة الضبط"); });
-        addBtn(layout, "✕ إغلاق", v -> stopSelf());
+        addBtn(layout, "<- yasar",  v -> { TransformSettings.get().panX -= 50; toast("X: " + TransformSettings.get().panX); });
+        addBtn(layout, "-> yamin",  v -> { TransformSettings.get().panX += 50; toast("X: " + TransformSettings.get().panX); });
+        addBtn(layout, "^ a3la",    v -> { TransformSettings.get().panY -= 50; toast("Y: " + TransformSettings.get().panY); });
+        addBtn(layout, "v asfal",   v -> { TransformSettings.get().panY += 50; toast("Y: " + TransformSettings.get().panY); });
+        addBtn(layout, "+ zoom in",  v -> { TransformSettings.get().scale = Math.min(3f, TransformSettings.get().scale + 0.1f); toast("zoom: " + TransformSettings.get().scale); });
+        addBtn(layout, "- zoom out", v -> { TransformSettings.get().scale = Math.max(0.5f, TransformSettings.get().scale - 0.1f); toast("zoom: " + TransformSettings.get().scale); });
+        addBtn(layout, "reset", v -> { TransformSettings.get().resetAll(); toast("reset"); });
+        addBtn(layout, "X close", v -> stopSelf());
 
         int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -71,8 +70,7 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START;
-        params.x = 0;
-        params.y = 100;
+        params.x = 0; params.y = 100;
 
         panel.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN) {
@@ -85,34 +83,25 @@ public class OverlayService extends Service {
             }
             return false;
         });
-
         wm.addView(panel, params);
     }
 
-    private void addBtn(LinearLayout parent, String label, View.OnClickListener click) {
+    private void addBtn(LinearLayout p, String label, View.OnClickListener c) {
         Button b = new Button(this);
         b.setText(label);
         b.setTextSize(11f);
         b.setTextColor(Color.WHITE);
         b.setBackgroundColor(Color.argb(200, 30, 80, 160));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(0, 2, 0, 2);
         b.setLayoutParams(lp);
-        b.setOnClickListener(click);
-        parent.addView(b);
+        b.setOnClickListener(c);
+        p.addView(b);
     }
 
-    private void toast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
+    private void toast(String msg) { Toast.makeText(this, msg, Toast.LENGTH_SHORT).show(); }
 
-    @Override
-    public void onDestroy() {
-        if (panel != null) wm.removeView(panel);
-    }
-
-    @Override
-    public IBinder onBind(Intent i) { return null; }
+    @Override public void onDestroy() { if (panel != null) wm.removeView(panel); }
+    @Override public IBinder onBind(Intent i) { return null; }
 }
