@@ -1,0 +1,2 @@
+rootProject.name = "vcam"
+include ':app'

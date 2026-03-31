@@ -1,0 +1,36 @@
+name: Build VCam APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Download Xposed API
+        run: |
+          mkdir -p app/libs
+          curl -L -o app/libs/xposed-api.jar \
+            "https://github.com/rovo89/XposedBridge/releases/download/art/XposedBridgeApi-54.jar"
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build APK
+        run: ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vcam-apk
+          path: app/build/outputs/apk/release/*.apk
