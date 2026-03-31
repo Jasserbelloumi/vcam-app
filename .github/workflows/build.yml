@@ -18,13 +18,9 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
-      - name: Download Gradle Wrapper
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-8.4-bin.zip -O gradle.zip
-          unzip -q gradle.zip
-          mv gradle-8.4/bin/gradle /usr/local/bin/gradle
-          gradle wrapper --gradle-version 8.4
-          chmod +x gradlew
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
 
       - name: Download Xposed API
         run: |
@@ -32,7 +28,7 @@ jobs:
           curl -L -o app/libs/xposed-api.jar \
             "https://github.com/rovo89/XposedBridge/releases/download/art/XposedBridgeApi-54.jar"
 
-      - name: Generate debug keystore
+      - name: Generate keystore
         run: |
           keytool -genkey -v -keystore app/debug.keystore \
             -alias androiddebugkey -keyalg RSA -keysize 2048 \
@@ -40,7 +36,7 @@ jobs:
             -dname "CN=VCam,O=Dev,C=US"
 
       - name: Build APK
-        run: ./gradlew assembleRelease --no-daemon
+        run: gradle assembleRelease --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
