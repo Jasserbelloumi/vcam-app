@@ -1,78 +1,65 @@
 package com.example.vcam;
 
-import android.app.*;
-import android.content.*;
-import android.graphics.*;
-import android.os.*;
-import android.view.*;
-import android.widget.*;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.os.Build;
+import android.os.IBinder;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 public class OverlayService extends Service {
 
     private WindowManager wm;
-    private View          panel;
-    private float         lastX, lastY;
+    private View panel;
+    private float lastX, lastY;
 
     @Override
     public int onStartCommand(Intent i, int f, int s) {
-        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
         buildPanel();
         return START_STICKY;
     }
 
     private void buildPanel() {
-        panel = new LinearLayout(this);
-        ((LinearLayout) panel).setOrientation(LinearLayout.VERTICAL);
-        ((LinearLayout) panel).setBackgroundColor(Color.argb(180, 0, 0, 0));
-        ((LinearLayout) panel).setPadding(8, 8, 8, 8);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setBackgroundColor(Color.argb(180, 0, 0, 0));
+        layout.setPadding(8, 8, 8, 8);
+        panel = layout;
 
-        addBtn("↔ قلب أفقي", v -> {
+        addBtn(layout, "↔ قلب أفقي", v -> {
             TransformSettings.get().flipHorizontal = !TransformSettings.get().flipHorizontal;
             toast("قلب أفقي: " + (TransformSettings.get().flipHorizontal ? "تشغيل" : "إيقاف"));
         });
-        addBtn("↕ قلب عمودي", v -> {
+        addBtn(layout, "↕ قلب عمودي", v -> {
             TransformSettings.get().flipVertical = !TransformSettings.get().flipVertical;
             toast("قلب عمودي: " + (TransformSettings.get().flipVertical ? "تشغيل" : "إيقاف"));
         });
-        addBtn("↻ تدوير +90°", v -> {
+        addBtn(layout, "↻ تدوير +90°", v -> {
             TransformSettings.get().rotateRight();
             toast("تدوير: " + TransformSettings.get().rotation + "°");
         });
-        addBtn("↺ تدوير -90°", v -> {
+        addBtn(layout, "↺ تدوير -90°", v -> {
             TransformSettings.get().rotateLeft();
             toast("تدوير: " + TransformSettings.get().rotation + "°");
         });
-        addBtn("← تحريك يسار", v -> {
-            TransformSettings.get().panX -= 50;
-            toast("إزاحة X: " + TransformSettings.get().panX);
-        });
-        addBtn("→ تحريك يمين", v -> {
-            TransformSettings.get().panX += 50;
-            toast("إزاحة X: " + TransformSettings.get().panX);
-        });
-        addBtn("↑ تحريك أعلى", v -> {
-            TransformSettings.get().panY -= 50;
-            toast("إزاحة Y: " + TransformSettings.get().panY);
-        });
-        addBtn("↓ تحريك أسفل", v -> {
-            TransformSettings.get().panY += 50;
-            toast("إزاحة Y: " + TransformSettings.get().panY);
-        });
-        addBtn("+ تكبير", v -> {
-            TransformSettings.get().scale = Math.min(3f, TransformSettings.get().scale + 0.1f);
-            toast("تكبير: " + String.format("%.1f", TransformSettings.get().scale) + "x");
-        });
-        addBtn("- تصغير", v -> {
-            TransformSettings.get().scale = Math.max(0.5f, TransformSettings.get().scale - 0.1f);
-            toast("تصغير: " + String.format("%.1f", TransformSettings.get().scale) + "x");
-        });
-        addBtn("↺ إعادة ضبط", v -> {
-            TransformSettings.get().resetAll();
-            toast("تم إعادة الضبط");
-        });
-        addBtn("✕ إغلاق", v -> stopSelf());
+        addBtn(layout, "← تحريك يسار", v -> { TransformSettings.get().panX -= 50; toast("X: " + TransformSettings.get().panX); });
+        addBtn(layout, "→ تحريك يمين", v -> { TransformSettings.get().panX += 50; toast("X: " + TransformSettings.get().panX); });
+        addBtn(layout, "↑ تحريك أعلى",  v -> { TransformSettings.get().panY -= 50; toast("Y: " + TransformSettings.get().panY); });
+        addBtn(layout, "↓ تحريك أسفل",  v -> { TransformSettings.get().panY += 50; toast("Y: " + TransformSettings.get().panY); });
+        addBtn(layout, "+ تكبير",  v -> { TransformSettings.get().scale = Math.min(3f, TransformSettings.get().scale + 0.1f); toast("zoom: " + String.format("%.1f", TransformSettings.get().scale)); });
+        addBtn(layout, "- تصغير",  v -> { TransformSettings.get().scale = Math.max(0.5f, TransformSettings.get().scale - 0.1f); toast("zoom: " + String.format("%.1f", TransformSettings.get().scale)); });
+        addBtn(layout, "↺ إعادة ضبط", v -> { TransformSettings.get().resetAll(); toast("تم إعادة الضبط"); });
+        addBtn(layout, "✕ إغلاق", v -> stopSelf());
 
-        // إعداد نافذة عائمة قابلة للسحب
         int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 : WindowManager.LayoutParams.TYPE_PHONE;
@@ -84,17 +71,17 @@ public class OverlayService extends Service {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.TOP | Gravity.START;
-        params.x = 0; params.y = 100;
+        params.x = 0;
+        params.y = 100;
 
         panel.setOnTouchListener((v, e) -> {
-            switch (e.getAction()) {
-                case MotionEvent.ACTION_DOWN: lastX = e.getRawX(); lastY = e.getRawY(); break;
-                case MotionEvent.ACTION_MOVE:
-                    params.x += (int)(e.getRawX() - lastX);
-                    params.y += (int)(e.getRawY() - lastY);
-                    lastX = e.getRawX(); lastY = e.getRawY();
-                    wm.updateViewLayout(panel, params);
-                    break;
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
+                lastX = e.getRawX(); lastY = e.getRawY();
+            } else if (e.getAction() == MotionEvent.ACTION_MOVE) {
+                params.x += (int)(e.getRawX() - lastX);
+                params.y += (int)(e.getRawY() - lastY);
+                lastX = e.getRawX(); lastY = e.getRawY();
+                wm.updateViewLayout(panel, params);
             }
             return false;
         });
@@ -102,18 +89,19 @@ public class OverlayService extends Service {
         wm.addView(panel, params);
     }
 
-    private void addBtn(String label, View.OnClickListener click) {
+    private void addBtn(LinearLayout parent, String label, View.OnClickListener click) {
         Button b = new Button(this);
         b.setText(label);
         b.setTextSize(11f);
         b.setTextColor(Color.WHITE);
         b.setBackgroundColor(Color.argb(200, 30, 80, 160));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMargins(0, 2, 0, 2);
         b.setLayoutParams(lp);
         b.setOnClickListener(click);
-        ((LinearLayout) panel).addView(b);
+        parent.addView(b);
     }
 
     private void toast(String msg) {
@@ -125,5 +113,6 @@ public class OverlayService extends Service {
         if (panel != null) wm.removeView(panel);
     }
 
-    @Override public IBinder onBind(Intent i) { return null; }
+    @Override
+    public IBinder onBind(Intent i) { return null; }
 }
